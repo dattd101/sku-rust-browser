@@ -1,0 +1,18 @@
+[package]
+name = "minimal-browser"
+version = "0.1.0"
+edition = "2021"
+description = "Minimal Windows browser powered by Rust and WebView2"
+
+[dependencies]
+tao = "0.34"
+wry = "0.53"
+url = "2.5"
+serde_json = "1.0"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

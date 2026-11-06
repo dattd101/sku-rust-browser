@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root { font-family: "Segoe UI", Arial, sans-serif; color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f3f4f6; }
+  nav { height: 48px; padding: 6px 9px; display: flex; align-items: center; gap: 5px; }
+  button { height: 34px; min-width: 34px; border: 0; border-radius: 7px; background: transparent; cursor: pointer; font-size: 19px; color: #1f2937; }
+  button:hover { background: #e2e5ea; }
+  button:focus-visible, input:focus-visible { outline: 2px solid #2563eb; outline-offset: -2px; }
+  input { height: 34px; flex: 1; min-width: 0; border: 1px solid #d1d5db; border-radius: 9px; background: white; padding: 0 12px; font-size: 13px; outline: none; }
+</style>
+</head>
+<body>
+<nav>
+  <button title="Back" aria-label="Back" onclick="send('back')">&#8592;</button>
+  <button title="Forward" aria-label="Forward" onclick="send('forward')">&#8594;</button>
+  <button title="Reload" aria-label="Reload" onclick="send('reload')">&#8635;</button>
+  <button title="Home" aria-label="Home" onclick="send('home')">&#8962;</button>
+  <input id="address" aria-label="Address" placeholder="Search or enter address" autocomplete="off" spellcheck="false">
+  <button title="Go" aria-label="Go" onclick="navigate()">&#10140;</button>
+</nav>
+<script>
+  const address = document.getElementById('address');
+  function send(message) { window.ipc.postMessage(message); }
+  function navigate() { send('navigate:' + address.value); }
+  address.addEventListener('keydown', event => {
+    if (event.key === 'Enter') navigate();
+  });
+  window.setAddress = url => {
+    if (document.activeElement !== address) address.value = url;
+  };
+  window.focusAddress = () => { address.focus(); address.select(); };
+  document.addEventListener('keydown', event => {
+    if (event.ctrlKey && event.key.toLowerCase() === 'l') {
+      event.preventDefault(); window.focusAddress();
+    }
+  });
+</script>
+</body>
+</html>
