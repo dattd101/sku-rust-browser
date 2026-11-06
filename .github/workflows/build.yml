@@ -1,4 +1,4 @@
-name: Build Windows EXE
+name: Build and scan Windows EXE
 
 on:
   push:
@@ -15,19 +15,45 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Rust toolchain
+      - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-pc-windows-msvc
-      - name: Cache dependencies
+      - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
-      - name: Run unit tests
+      - name: Test
         run: cargo test --target x86_64-pc-windows-msvc
-      - name: Build release EXE
+      - name: Build release
         run: cargo build --release --target x86_64-pc-windows-msvc
-      - name: Upload EXE
+      - name: Scan release with Microsoft Defender
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = (Resolve-Path 'target/x86_64-pc-windows-msvc/release/minimal-browser.exe').Path
+          $cmd = Get-Command Start-MpScan -ErrorAction SilentlyContinue
+          if (-not $cmd) { throw 'Microsoft Defender PowerShell cmdlets unavailable: cannot verify artifact' }
+          Update-MpSignature -ErrorAction Stop
+          $before = @(Get-MpThreatDetection -ErrorAction Stop | Where-Object { $_.Resources -match 'minimal-browser.exe' })
+          Start-MpScan -ScanType CustomScan -ScanPath $exe -ErrorAction Stop
+          $after = @(Get-MpThreatDetection -ErrorAction Stop | Where-Object { $_.Resources -match 'minimal-browser.exe' })
+          if ($after.Count -gt $before.Count) {
+            $after | Format-List | Out-String | Write-Host
+            throw 'Defender reported a detection for the executable'
+          }
+          Write-Host 'No new Defender detection was reported for this scan.'
+      - name: SHA256 checksum
+        shell: pwsh
+        run: |
+          $exe = 'target/x86_64-pc-windows-msvc/release/minimal-browser.exe'
+          $hash = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  minimal-browser.exe" | Set-Content -Encoding ascii SHA256SUMS.txt
+          Get-Content SHA256SUMS.txt
+      - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
           name: MinimalBrowser-Windows-x64
-          path: target/x86_64-pc-windows-msvc/release/minimal-browser.exe
+          path: |
+            target/x86_64-pc-windows-msvc/release/minimal-browser.exe
+            SHA256SUMS.txt
           if-no-files-found: error
+          retention-days: 30

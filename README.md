@@ -1,34 +1,21 @@
 # Minimal Browser (Rust + WebView2)
 
-Minimal Windows desktop browser with a native window and two embedded WebView2 instances: a compact toolbar and a website view.
+Windows x64 minimal browser using `tao` and `wry`. Includes a simple HTML toolbar, navigation, and an experimental Cloudflare DoH Chromium flag configuration.
 
-## Features
+## Build on GitHub
 
-- Address bar with domain normalization and Google search fallback
-- Back, Forward, Reload, Home
-- Resizable window
-- Embedded toolbar HTML (no external asset needed alongside EXE)
-- GitHub Actions Windows x64 build with downloadable EXE artifact
+Upload the **contents of this folder** to the repository root. GitHub Actions builds the EXE, runs Rust tests, attempts a Microsoft Defender scan, and generates a SHA-256 checksum. Download the artifact from the Actions run.
 
-## Build on GitHub Actions
+## Security and Chrome warnings
 
-1. Upload the project files to the root of a GitHub repository.
-2. Open **Actions → Build Windows EXE → Run workflow** (or push to `main`/`master`).
-3. After the job succeeds, download artifact **MinimalBrowser-Windows-x64**.
-4. Extract `minimal-browser.exe` and run it on Windows with Microsoft Edge WebView2 Runtime installed.
+A successful Cargo build or Defender scan does not mean Chrome Safe Browsing will accept an unsigned, unfamiliar executable. The EXE is not code-signed. For public distribution, use an established code-signing identity and build reputation over time. Do not disable Chrome Safe Browsing or Windows Defender.
+
+Defender PowerShell cmdlets and signature updates may be unavailable on some GitHub-hosted runners; in that case the scan step deliberately fails rather than claiming the file is clean.
+
+## Cloudflare DNS
+
+The application sets `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` before initializing WebView2 with Chromium DoH flags. Whether those flags are honored depends on WebView2 Runtime and policy; this is **not** a guarantee that all DNS requests use Cloudflare. Test at https://1.1.1.1/help.
 
 ## Notes
 
-- This is an MVP, not a hardened browser for untrusted browsing. No tabs, downloads UI, or profile management.
-- The toolbar's Ctrl+L shortcut works while the toolbar has focus; global shortcuts are not implemented.
-- WebView2 Runtime is required on the target Windows machine.
-- Source has not been compiled in this environment; GitHub Actions performs the actual Windows validation.
-
-## Fix v0.1.1
-
-Back/Forward use `evaluate_script("window.history.back();")` and `evaluate_script("window.history.forward();")` instead of unsupported Wry methods.
-
-
-## Cloudflare DNS over HTTPS (experimental)
-
-`src/main.rs` sets `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` before creating WebView2 with Chromium flags `--dns-over-https-mode=secure` and `--dns-over-https-templates=https://cloudflare-dns.com/dns-query`. The flags are best-effort: the installed WebView2 Runtime, policy, and an already-running shared browser process may ignore them. This does not configure Windows system DNS, and it does not guarantee all DNS traffic uses Cloudflare. Test resolution and failure behavior on the target machine.
+Requires WebView2 Runtime on the target Windows machine. Source was reviewed, but this package was not compiled or scanned on Windows in this environment.
