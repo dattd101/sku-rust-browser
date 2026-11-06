@@ -26,7 +26,22 @@ fn bounds(x: f64, y: f64, width: f64, height: f64) -> Rect {
     }
 }
 
+fn configure_cloudflare_dns() {
+    // WebView2 reads this before its browser process is initialized.
+    // Preserve any flags supplied by the launcher or the user.
+    const DOH_FLAGS: &str = "--dns-over-https-mode=secure --dns-over-https-templates=https://cloudflare-dns.com/dns-query";
+    let existing = std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS")
+        .unwrap_or_default();
+    let flags = if existing.trim().is_empty() {
+        DOH_FLAGS.to_owned()
+    } else {
+        format!("{existing} {DOH_FLAGS}")
+    };
+    std::env::set_var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", flags);
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    configure_cloudflare_dns();
     let event_loop = EventLoopBuilder::<BrowserEvent>::with_user_event().build();
     let window = WindowBuilder::new()
         .with_title("Minimal Browser")
@@ -64,7 +79,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Event::UserEvent(BrowserEvent::Command(command)) => {
                 let result = match command.as_str() {
                     "back" => browser.evaluate_script("window.history.back();"),
-					"forward" => browser.evaluate_script("window.history.forward();"),
+                    "forward" => browser.evaluate_script("window.history.forward();"),
                     "reload" => browser.reload(),
                     "home" => browser.load_url(HOME_URL),
                     _ if command.starts_with("navigate:") => {
