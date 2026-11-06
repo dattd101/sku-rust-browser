@@ -19,3 +19,13 @@ The application sets `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` before initializing
 ## Notes
 
 Requires WebView2 Runtime on the target Windows machine. Source was reviewed, but this package was not compiled or scanned on Windows in this environment.
+
+## Added features
+
+- Up to 10 tabs; add, switch and close tabs. Tabs keep their WebView state while inactive.
+- History (up to 2,000 visits) and bookmarks saved locally to `%LOCALAPPDATA%\MinimalBrowser\data.json` (fallback `%APPDATA%`). Open them from the toolbar. History can be cleared; bookmark button toggles the current page.
+- Built-in **cosmetic** ad blocker (on by default) that hides common ad containers and ad iframes using CSS injection. Toggle using the shield button. Toggling recreates all WebViews and reloads their current URLs.
+
+**Ad-blocking limitation:** This is NOT a Chrome extension, does NOT install Chrome Web Store extensions, does NOT implement Manifest V3/declarativeNetRequest, and does NOT cancel network requests. It will not block all ads (especially video ads), and some websites may break. Full extension-style blocking requires a separate WebView2 extension integration or native network request interception.
+
+**Privacy:** History and bookmarks are stored unencrypted on the local machine. Do not use the application as a private/incognito browser.
