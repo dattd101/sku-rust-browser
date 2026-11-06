@@ -63,8 +63,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match event {
             Event::UserEvent(BrowserEvent::Command(command)) => {
                 let result = match command.as_str() {
-                    "back" => browser.go_back(),
-                    "forward" => browser.go_forward(),
+                    "back" => browser.evaluate_script("window.history.back();"),
+					"forward" => browser.evaluate_script("window.history.forward();"),
                     "reload" => browser.reload(),
                     "home" => browser.load_url(HOME_URL),
                     _ if command.starts_with("navigate:") => {
